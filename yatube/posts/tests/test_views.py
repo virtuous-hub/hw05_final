@@ -273,10 +273,12 @@ class FollowViewsTest(TestCase):
         followers = Follow.objects.count()
         reverse_names = {
             self.author_client.get(reverse(
-                'posts:profile_follow', kwargs={'username': self.author.username}
+                'posts:profile_follow',
+                kwargs={'username': self.author.username}
             )),
             self.guest_client.get(reverse(
-                'posts:profile_follow', kwargs={'username': self.author.username}
+                'posts:profile_follow',
+                kwargs={'username': self.author.username}
             ))
         }
         for value in reverse_names:
@@ -298,10 +300,10 @@ class FollowViewsTest(TestCase):
         self.assertTrue(follower)
         client.get(reverse(
             'posts:profile_follow', kwargs={'username': self.author.username}))
-        self.assertNotEqual(Follow.objects.count(),  followers + 1)
+        self.assertNotEqual(Follow.objects.count(), followers + 1)
 
     def test_follow_and_unfollow(self):
-        """Авторизированный пользователь может подписаться и отписаться от автора"""
+        """Авторизир. пользователь может подписаться и отписаться от автора"""
         client = self.client_user
         user = self.authorized_user
         author = self.author

@@ -9,7 +9,7 @@ from django.urls import reverse
 
 from http import HTTPStatus
 
-from ..forms import CommentForm, PostForm
+from ..forms import PostForm
 from ..models import Comment, Group, Post
 
 User = get_user_model()
