@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render, redirect
 from django.views.decorators.cache import cache_page
 
-from .global_constants import LIM_POSTS_PAGE
+from .global_constants import LIM_POSTS_PAGE, CACHE_TIME
 from .forms import PostForm, CommentForm
 from .models import Comment, Follow, Group, Post, User
 
@@ -19,7 +19,7 @@ def page_context(queryset, request):
     }
 
 
-@cache_page(20, key_prefix='index_page')
+@cache_page(CACHE_TIME, key_prefix='index_page')
 def index(request):
     title = 'Последние обновления на сайте.'
     text_index = 'Главная страница'
@@ -38,14 +38,9 @@ def group_posts(request, slug):
     template = 'posts/group_list.html'
     group = get_object_or_404(Group, slug=slug)
     post_list = group.group_list.select_related("author", "group")
-    text = group.description
-    title = group.title
-    title_text = 'Записи сообщества: '
     context = {
-        'title': title_text + title,
         'page_obj': post_list,
         'group': group,
-        'text': text,
     }
     context.update(page_context(post_list, request))
     return render(request, template, context)
@@ -55,13 +50,10 @@ def profile(request, username):
     author = get_object_or_404(User, username=username)
     post_list = author.posts.select_related("group", "author")
     template = 'posts/profile.html'
-    following = False
-    if request.user.is_authenticated is True:
-        check_filter = Follow.objects.filter(user=request.user, author=author)
-        if check_filter:
-            following = True
-        else:
-            following = False
+    following = request.user.is_authenticated and Follow.objects.filter(
+        user=request.user,
+        author=author
+    ).exists()
     context = {
         'page_obj': post_list,
         'author': author,
@@ -148,20 +140,12 @@ def follow_index(request):
 def profile_follow(request, username):
     author_follow = get_object_or_404(User, username=username)
     if request.user != author_follow:
-        follower = Follow.objects.filter(
+        Follow.objects.get_or_create(
             user=request.user,
             author=author_follow
-        ).exists()
-        if follower is False:
-            Follow.objects.create(
-                user=request.user,
-                author=author_follow
-            )
-            return redirect('posts:profile', author_follow)
-        else:
-            return redirect('posts:index')
-    else:
+        )
         return redirect('posts:profile', author_follow)
+    return redirect('posts:profile', author_follow)
 
 
 @login_required
